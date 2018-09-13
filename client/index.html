@@ -59,7 +59,7 @@
                   <h4 class="card-title">
                     {{ item.status }}
                   </h4>
-                  <button v-if="isLogin" @click="deleteQuote">Delete</button> |
+                  <button v-if="isLogin" @click="deleteQuote(item._id)">Delete</button> |
                   <a href="#">Translate</a> |
                   <p class="translate font-italic">
                     Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua
