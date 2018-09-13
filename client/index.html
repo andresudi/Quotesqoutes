@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/css/bootstrap.min.css" integrity="sha384-Smlep5jCw/wG7hdkwQ/Z5nLIefveQRIY9nfy6xoR1uRYBtpZgI6339F5dgvm/e9B"
+    crossorigin="anonymous">
+  <link href="css/shop-homepage.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+  <div id="app">
+    <div class="navbar bg-dark">
+      <div class="container">
+        <a class="navbar-brand" href="#">Livecode1</a>
+
+        <div class="header-right">
+          <input v-if="!isLogin" type="text" placeholder="email" v-model="email">
+          <input v-if="!isLogin" type="password" placeholder="password" v-model="password">
+          <button v-if="!isLogin" @click="login">Login</button>
+          <button v-if="isLogin" @click="logout">Logout</button>
+        </div>
+        <span v-if='isLogin' style="color: white;">Login succesfully</span>
+        <span v-if='isError' style="color: white;">Error! something wrong with your email/pass</span>
+      </div>
+    </div>
+
+    <!-- Page Content -->
+    <div class="container container-content">
+      <div class="row">
+        <div class="col-lg-3">
+          <div class="list-group">
+            <a href="#" class="list-group-item">All Quotes</a>
+          </div>
+        </div>
+        <!-- /.col-lg-3 -->
+
+        <div class="col-lg-9">
+          <div class="row">
+            <div class="col-lg-9 col-sm-9 portfolio-item" v-if='isLogin'>
+              <form>
+                <div class="form-group">
+                  <input v-model="status" class="form-control" type="text" placeholder="Quotes"></input>
+                </div>
+                <div class="form-group">
+                  <button type="submit" class="btn btn-primary" @click="addQuote">Submit</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <hr>
+          <div class="row">
+            <div v-for="item in quotes" :key="item.id" class="col-lg-6 col-sm-6 portfolio-item">
+              <div class="card h-70">
+                <div class="card-body">
+                  <h4 class="card-title">
+                    {{ item.status }}
+                  </h4>
+                  <button v-if="isLogin" @click="deleteQuote">Delete</button> |
+                  <a href="#">Translate</a> |
+                  <p class="translate font-italic">
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+  <script>
+    var app = new Vue({
+      el: '#app',
+      data: {
+        email: '',
+        password: '',
+        status: '',
+        quotes: [],
+        isLogin: false,
+        isError: false,
+        errMess: ''
+      },
+      created() {
+        this.getAllQuote()
+      },
+      methods: {
+        getAllQuote() {
+          axios.get('http://localhost:3000/quotes')
+            .then((data) => {
+              console.log('ini data', data.data.data[0].status);
+              this.quotes = data.data.data
+            })
+            .catch((err) => {
+              console.log('ini error', err);
+
+            })
+        },
+
+        login() {
+          axios({
+            method: 'post',
+            url: 'http://localhost:3000/users/login',
+            data: {
+              email: this.email,
+              password: this.password
+            }
+          })
+            .then((data) => {
+              console.log('ini data login token', data.data.token);
+              let user = this.email
+              localStorage.setItem('user', user)
+              let token = data.data.token
+              localStorage.setItem('token', token)
+              this.isError = false
+              this.isLogin = true
+            })
+            .catch((err) => {
+              console.log('ini data err login', err);
+              this.errMess = err.message
+              this.isLogin = false
+              this.isError = true
+            })
+        },
+
+        logout() {
+          localStorage.removeItem('token')
+          this.isLogin = false
+        },
+
+        addQuote() {
+          let token = localStorage.getItem('token')
+          let data = {
+            status: this.status,
+          }
+          axios.post('http://localhost:3000/quotes', data, {
+            headers: {
+              token: token
+            }
+          })
+            .then(data => {
+              console.log(data.data);
+              this.getAllQuote()
+
+            })
+            .catch(err => {
+              console.log(err);
+
+            })
+        },
+
+        deleteQuote(data) {
+          console.log(data);
+          
+          let token = localStorage.getItem('token')
+          axios({
+            method: 'delete',
+            url: `http://localhost:3000/quotes/${data._id}`,
+            headers: {
+              token: token
+            }
+          })
+            .then((data) => {
+              this.getAllQuote()
+             
+            })
+            .catch((err) => {
+              console.log(err);
+              
+            })
+        }
+      }
+    })
+  </script>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/js/bootstrap.min.js" integrity="sha384-o+RDsa0aLu++PJvFqy8fFScvbHFLtbvScb8AjopnFD+iEQ7wo/CG0xlczd+2O/em"
+    crossorigin="anonymous"></script>
+
+</body>
+
+</html>
